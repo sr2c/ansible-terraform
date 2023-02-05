@@ -1,0 +1,68 @@
+---
+- name: Ensure a module path is defined
+  ansible.builtin.assert:
+    that:
+      - terraform_module_source is defined
+    fail_msg: "terraform_module_source must be defined"
+
+- name: Create a temporary directory
+  ansible.builtin.tempfile:
+    state: directory
+  register: terraform_module_temporary_directory
+
+- name: Write root module configuration
+  ansible.builtin.template:
+    src: main.tf.json.j2
+    dest: "{{ terraform_module_temporary_directory['path'] }}/main.tf.json"
+  vars:
+    terraform_module_config:
+      terraform:
+        backend: "{{ terraform_module_backend_config }}"
+      module:
+        this: "{{ terraform_module_inputs | combine({'source': terraform_module_source}) }}"
+      output:
+        this:
+          value: "${module.this}"
+          sensitive: true
+
+- name: Generate a Terraform plan
+  community.general.terraform:
+    project_path: "{{ terraform_module_temporary_directory['path'] }}"
+    force_init: true
+    state: planned
+    plan_file: "{{ inventory_hostname }}-plan.out"
+
+- name: Register the Terraform plan
+  ansible.builtin.command:
+    cmd: "terraform show -no-color {{ inventory_hostname }}-plan.out"
+    chdir: "{{ terraform_module_temporary_directory['path'] }}"
+  register: terraform_module_plan
+
+- name: Display the Terraform plan
+  ansible.builtin.debug:
+    var: terraform_module_plan.stdout
+
+- name: Wait for confirmation
+  ansible.builtin.pause:
+    prompt: "Does the plan look good? (Ctrl+C to abort)"
+
+- name: Apply the Terraform plan
+  community.general.terraform:
+    project_path: "{{ terraform_module_temporary_directory['path'] }}"
+    state: present
+    plan_file: "{{ inventory_hostname }}-plan.out"
+
+- name: Obtain the outputs from Terraform
+  ansible.builtin.command:
+    cmd: "terraform output -json"
+    chdir: "{{ terraform_module_temporary_directory['path'] }}"
+  register: terraform_module_outputs_default
+
+- name: Save the outputs to the chosen variable
+  ansible.builtin.set_fact:
+    "{{ terraform_module_outputs_var }}": "{{ (terraform_module_outputs_default.stdout | from_json).this.value }}"
+
+- name: Clean up temporary directory
+  ansible.builtin.file:
+    path: "{{ terraform_module_temporary_directory['path'] }}"
+    state: absent

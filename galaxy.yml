@@ -1,0 +1,26 @@
+namespace: sr2c
+name: terraform
+version: 0.0.1
+readme: README.md
+authors:
+- irl <irl@sr2.uk>
+description: A collection of plugins and roles to interact with Terraform from Ansible
+license:
+- BSD-2
+dependencies: {}
+repository: https://www.gitlab.com/sr2c/ansible-terraform
+issues: https://www.gitlab.com/sr2c/ansible-terraform/-/issues
+
+# A list of file glob-like patterns used to filter any files or directories that should not be included in the build
+# artifact. A pattern is matched from the relative path of the file or directory of the collection directory. This
+# uses 'fnmatch' to match the files or directories. Some directories and files like 'galaxy.yml', '*.pyc', '*.retry',
+# and '.git' are always filtered. Mutually exclusive with 'manifest'
+build_ignore: []
+
+# A dict controlling use of manifest directives used in building the collection artifact. The key 'directives' is a
+# list of MANIFEST.in style
+# L(directives,https://packaging.python.org/en/latest/guides/using-manifest-in/#manifest-in-commands). The key
+# 'omit_default_directives' is a boolean that controls whether the default directives are used. Mutually exclusive
+# with 'build_ignore'
+# manifest: null
+

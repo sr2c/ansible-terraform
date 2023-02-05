@@ -1,0 +1,17 @@
+name: ansible-terraform-s3-backend
+
+license: "BSD2"
+
+gitlab_repo: sr2c/ansible-terraform-s3-backend
+
+description: |-
+  Ansible role to deploy the resources to use S3 for remote Terraform state storage.
+
+include:
+  - "docs/targets.md"
+  - "docs/ansible.md"
+
+contributors:
+  - name: irl
+    gitlab: irlxyz
+    gitlab_id: 5895869

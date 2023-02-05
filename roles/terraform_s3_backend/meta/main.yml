@@ -1,0 +1,16 @@
+---
+galaxy_info:
+  role_name: terraform_s3_backend
+  namespace: sr2c
+  author: Iain Learmonth
+  description: Ansible role to deploy the resources to use S3 for remote Terraform state storage.
+  company: SR2 Communications Limited
+  issue_tracker_url: https://gitlab.com/sr2c/ansible-terraform-s3-backend/-/issues
+  license: BSD2
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Debian
+      versions:
+        - bullseye
+  galaxy_tags: ['terraform', 'aws', 's3']
+dependencies: []

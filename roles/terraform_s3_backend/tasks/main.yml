@@ -1,0 +1,23 @@
+---
+- name: Create S3 bucket for Terraform remote state
+  amazon.aws.s3_bucket:
+    name: "{{ terraform_state_s3_bucket_name }}"
+    state: present
+    delete_public_access: true
+    encryption: "AES256"
+    versioning: true
+
+- name: Create DynamoDB table for Terraform remote state
+  community.aws.dynamodb_table:
+    name: "{{ terraform_state_dynamodb_table_name }}"
+    state: present
+    read_capacity: 5
+    write_capacity: 5
+    hash_key_name: "LockID"
+
+- name: Register the Terraform backend configuration
+  ansible.builtin.set_fact:
+    terraform_s3_backend_config:
+      bucket: "{{ terraform_state_s3_bucket_name }}"
+      dynamodb_table: "{{ terraform_state_dynamodb_table_name }}"
+  when: terraform_state_register_config
