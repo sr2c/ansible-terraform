@@ -19,7 +19,7 @@
       terraform:
         backend: "{{ terraform_module_backend_config }}"
       module:
-        this: "{{ terraform_module_inputs | combine({'source': terraform_module_source}) }}"
+        this: "{{ terraform_module_inputs | combine({'source': terraform_module_source}) | combine(terraform_module_version is defined | ternary({'version': terraform_module_version}, {})) }}"
       output:
         this:
           value: "${module.this}"
@@ -44,23 +44,44 @@
 
 - name: Wait for confirmation
   ansible.builtin.pause:
-    prompt: "Does the plan look good? (Ctrl+C to abort)"
+    prompt: |
+      Do you want to perform these actions?
+        Terraform will perform the actions described above.
+        Only 'yes' will be accepted to approve.
+      
+        Enter a value:
+  register: terraform_module_confirmation
+
+- name: Pause before cleaning up
+  ansible.builtin.pause:
+    prompt: |
+      Plan was not approved. The temporary directory at:
+      
+        {{ terraform_module_temporary_directory['path'] }}
+      
+      will be cleaned up in 15 seconds. If you wish to investigate the Terraform configuration, press Ctrl+C and abort
+      this playbook now!
+    seconds: 15
+  when: terraform_module_confirmation.user_input != "yes"
 
 - name: Apply the Terraform plan
   community.general.terraform:
     project_path: "{{ terraform_module_temporary_directory['path'] }}"
     state: present
     plan_file: "{{ inventory_hostname }}-plan.out"
+  when: terraform_module_confirmation.user_input == "yes"
 
 - name: Obtain the outputs from Terraform
   ansible.builtin.command:
     cmd: "terraform output -json"
     chdir: "{{ terraform_module_temporary_directory['path'] }}"
   register: terraform_module_outputs_default
+  when: terraform_module_confirmation.user_input == "yes"
 
 - name: Save the outputs to the chosen variable
   ansible.builtin.set_fact:
     "{{ terraform_module_outputs_var }}": "{{ (terraform_module_outputs_default.stdout | from_json).this.value }}"
+  when: terraform_module_confirmation.user_input == "yes"
 
 - name: Clean up temporary directory
   ansible.builtin.file:

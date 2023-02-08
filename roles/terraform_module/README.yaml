@@ -1,0 +1,71 @@
+name: sr2c.terraform.terraform_module
+license: "BSD-2"
+
+# Canonical GitHub repo
+gitlab_repo: "https://gitlab.com/sr2c/ansible-terraform"
+
+related:
+- name: sr2c.terraform
+  description: "The Ansible collection that this role is part of."
+  url: "https://gitlab.com/sr2c/ansible-terraform"
+
+references:
+  - name: sr2c.terraform.terraform_s3_backend
+    description: "An ansible role to deploy the resources a Terraform backend to AWS using S3 and DynamoDB."
+    url: https://gitlab.com/sr2c/ansible-terraform/-/tree/dev/roles/terraform_s3_backend
+  - name: community.general.terraform
+    description: Manages a Terraform deployment (and plans)
+    url: https://docs.ansible.com/ansible/latest/collections/community/general/terraform_module.html
+
+description: |-
+  This role provides the complete steps necessary to deploy cloud resources using Terraform from a given Terraform
+  module. The module may be available in the local filesystem, via the Terraform registry, or any of the other
+  [supported module sources](https://developer.hashicorp.com/terraform/language/modules/sources). For modules source
+  types that support specifying a version, that can also be achieved using this module.
+  
+  The workflow in this modules tasks are illustrated in the following flowchart:
+  
+  ![Role Flowchart](./docs/flowchart.png)
+
+usage: |-
+  The following example creates the necessary resources in AWS to enable the use of an S3 backend (including a
+  DynamoDB table to facilitate state locking) and then creates a Tor bridge using the
+  [sr2c/tor-bridge/aws](https://registry.terraform.io/modules/sr2c/tor-bridge/aws/latest) Terraform module. It assumes
+  that the necessary environment variables to allow AWS authentication have been set where the playbook is to be
+  executed.
+  
+  ```yaml
+  ---
+  hosts: all
+  roles:
+    - role: sr2c.terraform.terraform_s3_backend
+      vars:
+        terraform_state_s3_bucket_name: "my-example-terraform-state"
+      delegate_to: localhost
+    - role: sr2c.terraform.terraform_module
+      vars:
+        terraform_module_backend_config:
+          s3: "{{ terraform_s3_backend_config | combine({'key': 'aws_base'}) }}"
+        terraform_module_source: "sr2c/tor-bridge/aws"
+        terraform_module_version: "0.1.0"
+        terraform_module_inputs:
+          name: "my-example-bridge"
+        terraform_module_outputs_var: "terraform_outputs_example"
+      delegate_to: localhost
+  tasks:
+    - name: Print out the hashed fingerprint of the deployed bridge
+      ansible.builtin.debug:
+        var: terraform_outputs_example.hashed_fingerprint
+  ```
+
+include:
+- "docs/ansible.md"
+- "docs/targets.md"
+
+contributors:
+  - name: irl
+    gitlab: irlxyz
+    gitlab_id: 5895869
+  - name: abel
+    gitlab: abelxluck
+    avatar: https://secure.gravatar.com/avatar/0f605397e0ead93a68e1be26dc26481a?s=192&d=identicon
