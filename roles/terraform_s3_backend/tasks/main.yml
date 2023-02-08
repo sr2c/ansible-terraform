@@ -27,3 +27,15 @@
       dynamodb_table: "{{ terraform_state_dynamodb_table_name }}"
       region: "{{ terraform_state_aws_region.stdout | trim }}"
   when: terraform_state_register_config
+
+- name: Create KMS key for encryption of secrets with sops
+  amazon.aws.kms_key:
+    alias: "{{ terraform_sops_kms_key_name }}"
+    state: present
+    tags:
+      Purpose: Encrytion of secrets with mozilla/sops
+  register: _terraform_sops_kms_key
+
+- name: Set sops kms key arn
+  ansible.builtin.set_fact:
+    terraform_sops_kms_key_arn: "{{ _terraform_sops_kms_key.key_arn }}"

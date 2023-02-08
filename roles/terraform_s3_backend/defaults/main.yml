@@ -4,3 +4,5 @@
 terraform_state_dynamodb_table_name: "{{ terraform_state_s3_bucket_name }}"
 # @var terraform_state_register_config: `true` # If true, the configuration will be registered in the `terraform_s3_backend_config` variable.
 terraform_state_register_config: true
+# @var terraform_sops_kms_key_name: # (required) The name of the key to create for encrypting files with mozilla/sops
+# terraform_sops_kms_key_name:
