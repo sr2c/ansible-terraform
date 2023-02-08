@@ -1,0 +1,16 @@
+creation_rules:
+- key_groups:
+  - pgp:
+    - notmanagedbyansible
+  path_regex: something
+- id: foobar
+  key_groups:
+  - pgp:
+    - XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    - YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY
+  - kms:
+    - arn: arn:aws:kms:eu-west-1:1234:key/aaaaaaaaa-11111-bbbbb-ccccc-xyzabcdew
+      aws_profile: foobar
+      context: null
+      role: null
+  path_regex: projects/foobar/.*\.sops\.yml

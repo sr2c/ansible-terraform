@@ -1,0 +1,95 @@
+# run this test with
+# ANSIBLE_LIBRARY=plugins/modules ansible-playbook test-sops-creation-rule.yml
+---
+- hosts: localhost
+  connection: localhost
+  vars:
+    sops_file: test-sops.yml
+  tasks:
+    - name: remove file
+      ansible.builtin.file:
+        path: "{{ sops_file }}"
+        state: absent
+
+    - name: create a file
+      sops_yaml_creation_rule:
+        path: "{{ sops_file }}"
+        rule_id: foobar
+        state: present
+        path_regex: projects/foobar/.*\.sops\.yml
+        kms:
+          - arn: arn:aws:kms:eu-west-1:1234:key/aaaaaaaaa-11111-bbbbb-ccccc-xyzabcdew
+            aws_profile: foobar
+        pgp:
+          - XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+    - name: add a pgp key
+      sops_yaml_creation_rule:
+        path: "{{ sops_file }}"
+        rule_id: foobar
+        state: present
+        path_regex: projects/foobar/.*\.sops\.yml
+        kms:
+          - arn: arn:aws:kms:eu-west-1:1234:key/aaaaaaaaa-11111-bbbbb-ccccc-xyzabcdew
+            aws_profile: foobar
+        pgp:
+          - XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+          - YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY
+
+    - ansible.builtin.stat:
+        path: "{{ sops_file  }}"
+      register: sops_pre_expected_stat
+
+    - ansible.builtin.stat:
+        path: "{{ playbook_dir }}/test/created-after.yml"
+      register: sops_pre_actual_stat
+
+    - name: assert the preexisting file was not clobbered
+      ansible.builtin.assert:
+        that:
+          - sops_pre_expected_stat.stat.checksum == sops_pre_actual_stat.stat.checksum
+
+    - name: create a preexisting sops file
+      ansible.builtin.copy:
+        dest: "{{ playbook_dir }}/preexisting.yml"
+        content: |
+          creation_rules:
+          - key_groups:
+            - pgp:
+              - notmanagedbyansible
+            path_regex: something
+
+    - name: add a new rule to a pre existing file without clobbering the other one
+      sops_yaml_creation_rule:
+        path: "{{ playbook_dir }}/preexisting.yml"
+        rule_id: foobar
+        state: present
+        path_regex: projects/foobar/.*\.sops\.yml
+        kms:
+          - arn: arn:aws:kms:eu-west-1:1234:key/aaaaaaaaa-11111-bbbbb-ccccc-xyzabcdew
+            aws_profile: foobar
+        pgp:
+          - XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+          - YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY
+
+
+    - ansible.builtin.stat:
+        path: "{{ playbook_dir }}/test/preexisting-after.yml"
+      register: sops_pre_expected_stat
+
+    - ansible.builtin.stat:
+        path: "{{ playbook_dir }}/preexisting.yml"
+      register: sops_pre_actual_stat
+
+    - name: assert the preexisting file was not clobbered
+      ansible.builtin.assert:
+        that:
+          - sops_pre_expected_stat.stat.checksum == sops_pre_actual_stat.stat.checksum
+
+    - name: cleanup
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop: 
+        - "{{ playbook_dir }}/preexisting.yml"
+        - "{{ sops_file }}"
