@@ -9,11 +9,17 @@
   ansible.builtin.tempfile:
     state: directory
   register: terraform_module_temporary_directory
+  when: terraform_module_workdir is not defined
+
+- name: Set terraform_module_workdir
+  ansible.builtin.set_fact:
+    terraform_module_workdir: "{{ terraform_module_temporary_directory['path'] }}"
+  when: terraform_module_workdir is not defined
 
 - name: Write root module configuration
   ansible.builtin.template:
     src: main.tf.json.j2
-    dest: "{{ terraform_module_temporary_directory['path'] }}/main.tf.json"
+    dest: "{{ terraform_module_workdir }}/main.tf.json"
   vars:
     terraform_module_config:
       terraform:
@@ -27,7 +33,7 @@
 
 - name: Generate a Terraform plan
   community.general.terraform:
-    project_path: "{{ terraform_module_temporary_directory['path'] }}"
+    project_path: "{{ terraform_module_workdir }}"
     force_init: true
     state: planned
     plan_file: "{{ inventory_hostname }}-plan.out"
@@ -35,55 +41,68 @@
 - name: Register the Terraform plan
   ansible.builtin.command:
     cmd: "terraform show -no-color {{ inventory_hostname }}-plan.out"
-    chdir: "{{ terraform_module_temporary_directory['path'] }}"
+    chdir: "{{ terraform_module_workdir }}"
   register: terraform_module_plan
 
-- name: Display the Terraform plan
-  ansible.builtin.debug:
-    var: terraform_module_plan.stdout
-
-- name: Wait for confirmation
-  ansible.builtin.pause:
-    prompt: |
-      Do you want to perform these actions?
-        Terraform will perform the actions described above.
-        Only 'yes' will be accepted to approve.
-      
-        Enter a value:
-  register: terraform_module_confirmation
-
-- name: Pause before cleaning up
-  ansible.builtin.pause:
-    prompt: |
-      Plan was not approved. The temporary directory at:
-      
-        {{ terraform_module_temporary_directory['path'] }}
-      
-      will be cleaned up in 15 seconds. If you wish to investigate the Terraform configuration, press Ctrl+C and abort
-      this playbook now!
-    seconds: 15
-  when: terraform_module_confirmation.user_input != "yes"
-
-- name: Apply the Terraform plan
-  community.general.terraform:
-    project_path: "{{ terraform_module_temporary_directory['path'] }}"
-    state: present
-    plan_file: "{{ inventory_hostname }}-plan.out"
-  when: terraform_module_confirmation.user_input == "yes"
-
-- name: Obtain the outputs from Terraform
-  ansible.builtin.command:
-    cmd: "terraform output -json"
-    chdir: "{{ terraform_module_temporary_directory['path'] }}"
-  register: terraform_module_outputs_default
-  when: terraform_module_confirmation.user_input == "yes"
-
-- name: Save the outputs to the chosen variable
+- name: Detect if there are any changes
   ansible.builtin.set_fact:
-    "{{ terraform_module_outputs_var }}": "{{ (terraform_module_outputs_default.stdout | from_json).this.value }}"
-  when: terraform_module_confirmation.user_input == "yes"
+    terraform_module_plan_has_changes: '{{ terraform_module_plan.stdout is not ansible.builtin.match(multiline=true, pattern="(?s:.)*Terraform has compared your real infrastructure against your configuration(?s:.)+and found no differences, so no changes are needed.*") }}'
+
+- name: Confirm and apply the plan
+  block:
+    - name: Display the Terraform plan
+      ansible.builtin.debug:
+        var: terraform_module_plan.stdout
+
+    - name: Wait for confirmation
+      ansible.builtin.pause:
+        prompt: |
+          Do you want to perform these actions?
+            Terraform will perform the actions described above.
+            Only 'yes' will be accepted to approve.
+
+            Enter a value:
+      register: terraform_module_confirmation
+
+    - name: Pause before cleaning up
+      ansible.builtin.pause:
+        prompt: |
+          Plan was not approved. The temporary directory at:
+
+            {{ terraform_module_temporary_directory['path'] }}
+
+          will be cleaned up in 5 seconds. If you wish to investigate the Terraform configuration, press Ctrl+C and abort
+          this playbook now!
+        seconds: 5
+      when: terraform_module_confirmation.user_input != "yes" and terraform_module_workdir == terraform_module_temporary_directory['path'] and terraform_module_workdir_clean_enabled
+
+    - name: Apply the Terraform plan
+      community.general.terraform:
+        project_path: "{{ terraform_module_workdir }}"
+        state: present
+        plan_file: "{{ inventory_hostname }}-plan.out"
+      when: terraform_module_confirmation.user_input == "yes"
+
+    - name: Obtain the outputs from Terraform
+      ansible.builtin.command:
+        cmd: "terraform output -json"
+        chdir: "{{ terraform_module_workdir }}"
+      register: terraform_module_outputs_default
+      when: terraform_module_confirmation.user_input == "yes"
+
+    - name: Save the outputs to the chosen variable
+      ansible.builtin.set_fact:
+        "{{ terraform_module_outputs_var }}": "{{ (terraform_module_outputs_default.stdout | from_json).this.value }}"
+      when: terraform_module_confirmation.user_input == "yes"
+  when: terraform_module_plan_has_changes
 
 - name: Clean up temporary directory
   ansible.builtin.file:
-    path: "{{ terraform_module_temporary_directory['path'] }}"
+    path: "{{ terraform_module_workdir }}"
     state: absent
+  when: terraform_module_workdir == terraform_module_temporary_directory['path'] and terraform_module_workdir_clean_enabled
+
+- name: Print temporary directory for investigation
+  ansible.builtin.debug:
+    msg: "Temporary directory has been retained at: {{ terraform_module_temporary_directory['path'] }}"
+  when: terraform_module_workdir == terraform_module_temporary_directory['path'] and not terraform_module_workdir_clean_enabled

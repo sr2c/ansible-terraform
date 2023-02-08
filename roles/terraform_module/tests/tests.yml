@@ -1,0 +1,10 @@
+---
+- hosts: all
+  connection: local
+  gather_facts: no
+  roles:
+    - role: "{{ playbook_dir }}/.."
+      vars:
+        terraform_module_source: "cloudposse/label/null"
+        terraform_module_inputs:
+          name: test-label
