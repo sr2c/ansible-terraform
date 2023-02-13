@@ -37,6 +37,10 @@ The workflow in this modules tasks are illustrated in the following flowchart:
 
 ![Role Flowchart](./docs/flowchart.png)
 
+Either `terraform_module_backend_config` or `terraform_module_workdir` must be set to avoid a situation where
+the resources are deployed and the local state in the temporary directory is then immediately deleted leaving the
+deployed resources unmanaged.
+
 ---
 
 
@@ -93,15 +97,17 @@ tasks:
 
 
 <!-- markdownlint-disable -->
-## Ansible Variables
+## Role Variables
 
-| Variable | Default Value | Description |
-| -------- | ------------- | ----------- |
-| terraform_module_backend_config | `{"local" : {}}` | The backend configuration to use |
-| terraform_module_inputs | `{}` | The inputs to pass to the Terraform module |
-| terraform_module_outputs_var | `"terraform_module_outputs"` | The name of a host variable to store the outputs of the Terraform module |
-| terraform_module_source | **REQUIRED** | The source of the Terraform module to use (either a Terraform registry path, or a relative filesystem path) |
-| terraform_module_version | ~ | The version of the Terraform module to use when using a module from the Terraform registry |
+| Variable     | Default Value  | Description  |
+| ------------ | -------------- | ------------ |
+| terraform_module_backend_config | `{"local" : {}}` | The backend configuration to use. |
+| terraform_module_inputs | `{}` | The inputs to pass to the Terraform module. |
+| terraform_module_outputs_var | `"terraform_module_outputs"` | The name of a host variable to store the outputs of the Terraform module. |
+| terraform_module_source | **REQUIRED** | The source of the Terraform module to use (either a Terraform registry path, or a relative filesystem path). |
+| terraform_module_version | ~ | The version of the Terraform module to use when using a module from the Terraform registry. |
+| terraform_module_workdir | ~ | The location where the Terraform files will be templated. By default a temporary directory is created. The location should be an empty directory that already exists. |
+| terraform_module_workdir_clean_enabled | `true` | Whether to clean the Terraform module work directory after execution. |
 <!-- markdownlint-enable -->
 <!-- markdownlint-disable -->
 ## Makefile Targets
@@ -128,6 +134,7 @@ Like this project? Please give it a ★ on [our GitLab](https://gitlab.com/https
 Check out these related projects.
 
 - [sr2c.terraform](https://gitlab.com/sr2c/ansible-terraform) - The Ansible collection that this role is part of.
+- [terraform-null-ansible](https://github.com/cloudposse/terraform-null-ansible) - A CloudPosse Terraform module to run Ansible playbooks.
 
 
 ## References
