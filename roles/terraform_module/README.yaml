@@ -8,6 +8,9 @@ related:
 - name: sr2c.terraform
   description: "The Ansible collection that this role is part of."
   url: "https://gitlab.com/sr2c/ansible-terraform"
+- name: terraform-null-ansible
+  description: "A CloudPosse Terraform module to run Ansible playbooks."
+  url: https://github.com/cloudposse/terraform-null-ansible
 
 references:
   - name: sr2c.terraform.terraform_s3_backend
@@ -27,6 +30,9 @@ description: |-
   
   ![Role Flowchart](./docs/flowchart.png)
 
+  Either `terraform_module_backend_config` or `terraform_module_workdir` must be set to avoid a situation where
+  the resources are deployed and the local state in the temporary directory is then immediately deleted leaving the
+  deployed resources unmanaged.
 usage: |-
   The following example creates the necessary resources in AWS to enable the use of an S3 backend (including a
   DynamoDB table to facilitate state locking) and then creates a Tor bridge using the
