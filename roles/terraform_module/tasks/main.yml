@@ -5,21 +5,32 @@
       - terraform_module_source is defined
     fail_msg: "terraform_module_source must be defined"
 
+- name: Ensure either a backend or work directory is defined
+  ansible.builtin.assert:
+    that:
+      - terraform_module_workdir is defined or terraform_module_backend_config is defined
+    fail_msg: "Either terraform_module_workdir or terraform_module_backend_config must be defined to avoid discarding state."
+
 - name: Create a temporary directory
   ansible.builtin.tempfile:
     state: directory
   register: terraform_module_temporary_directory
   when: terraform_module_workdir is not defined
 
-- name: Set terraform_module_workdir
+- name: Set working directory from temporary directory
   ansible.builtin.set_fact:
-    terraform_module_workdir: "{{ terraform_module_temporary_directory['path'] }}"
+    _terraform_module_workdir: "{{ terraform_module_temporary_directory['path'] }}"
   when: terraform_module_workdir is not defined
+
+- name: Set working directory from variable
+  ansible.builtin.set_fact:
+    _terraform_module_workdir: "{{ terraform_module_workdir }}"
+  when: terraform_module_workdir is defined
 
 - name: Write root module configuration
   ansible.builtin.template:
     src: main.tf.json.j2
-    dest: "{{ terraform_module_workdir }}/main.tf.json"
+    dest: "{{ _terraform_module_workdir }}/main.tf.json"
   vars:
     terraform_module_config:
       terraform:
@@ -33,7 +44,7 @@
 
 - name: Generate a Terraform plan
   community.general.terraform:
-    project_path: "{{ terraform_module_workdir }}"
+    project_path: "{{ _terraform_module_workdir }}"
     force_init: true
     state: planned
     plan_file: "{{ inventory_hostname }}-plan.out"
@@ -41,7 +52,7 @@
 - name: Register the Terraform plan
   ansible.builtin.command:
     cmd: "terraform show -no-color {{ inventory_hostname }}-plan.out"
-    chdir: "{{ terraform_module_workdir }}"
+    chdir: "{{ _terraform_module_workdir }}"
   register: terraform_module_plan
 
 - name: Detect if there are any changes
@@ -74,35 +85,33 @@
           will be cleaned up in 5 seconds. If you wish to investigate the Terraform configuration, press Ctrl+C and abort
           this playbook now!
         seconds: 5
-      when: terraform_module_confirmation.user_input != "yes" and terraform_module_workdir == terraform_module_temporary_directory['path'] and terraform_module_workdir_clean_enabled
+      when: terraform_module_confirmation.user_input != "yes" and terraform_module_workdir is not defined and terraform_module_workdir_clean_enabled
 
     - name: Apply the Terraform plan
       community.general.terraform:
-        project_path: "{{ terraform_module_workdir }}"
+        project_path: "{{ _terraform_module_workdir }}"
         state: present
         plan_file: "{{ inventory_hostname }}-plan.out"
       when: terraform_module_confirmation.user_input == "yes"
+  when: terraform_module_plan_has_changes  # end of block
 
-    - name: Obtain the outputs from Terraform
-      ansible.builtin.command:
-        cmd: "terraform output -json"
-        chdir: "{{ terraform_module_workdir }}"
-      register: terraform_module_outputs_default
-      when: terraform_module_confirmation.user_input == "yes"
+- name: Obtain the outputs from Terraform
+  ansible.builtin.command:
+    cmd: "terraform output -json"
+    chdir: "{{ _terraform_module_workdir }}"
+  register: terraform_module_outputs_default
 
-    - name: Save the outputs to the chosen variable
-      ansible.builtin.set_fact:
-        "{{ terraform_module_outputs_var }}": "{{ (terraform_module_outputs_default.stdout | from_json).this.value }}"
-      when: terraform_module_confirmation.user_input == "yes"
-  when: terraform_module_plan_has_changes
+- name: Save the outputs to the chosen variable
+  ansible.builtin.set_fact:
+    "{{ terraform_module_outputs_var }}": "{{ (terraform_module_outputs_default.stdout | from_json).this.value }}"
 
 - name: Clean up temporary directory
   ansible.builtin.file:
-    path: "{{ terraform_module_workdir }}"
+    path: "{{ _terraform_module_workdir }}"
     state: absent
-  when: terraform_module_workdir == terraform_module_temporary_directory['path'] and terraform_module_workdir_clean_enabled
+  when: terraform_module_workdir is not enabled and terraform_module_workdir_clean_enabled
 
 - name: Print temporary directory for investigation
   ansible.builtin.debug:
     msg: "Temporary directory has been retained at: {{ terraform_module_temporary_directory['path'] }}"
-  when: terraform_module_workdir == terraform_module_temporary_directory['path'] and not terraform_module_workdir_clean_enabled
+  when: terraform_module_workdir is not enabled and not terraform_module_workdir_clean_enabled
