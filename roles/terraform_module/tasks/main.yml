@@ -8,8 +8,11 @@
 - name: Ensure either a backend or work directory is defined
   ansible.builtin.assert:
     that:
-      - terraform_module_workdir is defined or terraform_module_backend_config is defined
+      - terraform_module_workdir is defined or terraform_module_backend_config != terraform_module_backend_config_default
     fail_msg: "Either terraform_module_workdir or terraform_module_backend_config must be defined to avoid discarding state."
+  vars:
+    terraform_module_backend_config_default:
+      local: {}
 
 - name: Create a temporary directory
   ansible.builtin.tempfile:
