@@ -5,6 +5,9 @@
   roles:
     - role: "{{ playbook_dir }}/.."
       vars:
+        terraform_module_backend_config:
+          local:
+            path: "test.tfstate"
         terraform_module_source: "cloudposse/label/null"
         terraform_module_inputs:
           name: test-label

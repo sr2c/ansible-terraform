@@ -112,9 +112,9 @@
   ansible.builtin.file:
     path: "{{ _terraform_module_workdir }}"
     state: absent
-  when: terraform_module_workdir is not enabled and terraform_module_workdir_clean_enabled
+  when: terraform_module_workdir is not defined and terraform_module_workdir_clean_enabled
 
 - name: Print temporary directory for investigation
   ansible.builtin.debug:
     msg: "Temporary directory has been retained at: {{ terraform_module_temporary_directory['path'] }}"
-  when: terraform_module_workdir is not enabled and not terraform_module_workdir_clean_enabled
+  when: terraform_module_workdir is not defined and not terraform_module_workdir_clean_enabled
