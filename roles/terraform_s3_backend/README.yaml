@@ -5,11 +5,57 @@ license: "BSD2"
 gitlab_repo: sr2c/ansible-terraform-s3-backend
 
 description: |-
-  Ansible role to deploy the resources to use S3 for remote Terraform state storage.
+  Ansible role to deploy the resources to use S3 for remote Terraform state storage. A DynamoDB table is created to
+  enable state locking.
+  
+  ![Architecture diagram](./docs/terraform_s3_backend.png)
+
+  **WARNING:** There is an assumption in this module that you'll be deploying the state backend to an AWS account that
+  you're then also going to deploy infrastructure to and you're likely logged in with an administrator account.
+  No permissions or IAM roles are configured for accessing the state bucket other than via administrator access. If
+  you are consolidating your Terraform state across projects into a single AWS account then you'd probably want to
+  use per-project IAM roles for accessing and modifying state.
+usage: |-
+  The following example shows how to ensure that the backend has been created, and then use the registered backend
+  configuration with the terraform_module role. Note the use of the combine filter to add the key to the configuration
+  to ensure that each module uses its own state object in the S3 bucket.
+  
+  ```yaml
+  ---
+  hosts: all
+  roles:
+    - role: sr2c.terraform.terraform_s3_backend
+      vars:
+        terraform_state_s3_bucket_name: "my-example-terraform-state"
+      delegate_to: localhost
+    - role: sr2c.terraform.terraform_module
+      vars:
+        terraform_module_backend_config:
+          s3: "{{ terraform_s3_backend_config | combine({'key': 'example'}) }}"
+        terraform_module_source: "sr2c/tor-bridge/aws"
+        terraform_module_version: "0.1.0"
+        terraform_module_inputs:
+          name: "my-example-bridge"
+      delegate_to: localhost
+  ```
+  
+  To use the created backend directly in Terraform using a Jinja2 template, add a backend configuration block to the
+  template file:
+  
+  ```hcl
+  terraform {
+    backend "s3" {
+      bucket         = "{{ terraform_s3_backend_config['bucket'] }}"
+      dynamodb_table = "{{ terraform_s3_backend_config['dynamodb_table'] }}"
+      key            = "example"
+      region         = "{{ lookup('env', 'AWS_REGION') }}"
+    }
+  }
+  ```
 
 include:
-  - "docs/targets.md"
   - "docs/ansible.md"
+  - "docs/targets.md"
 
 contributors:
   - name: irl
