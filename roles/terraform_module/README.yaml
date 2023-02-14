@@ -8,14 +8,14 @@ related:
 - name: sr2c.terraform
   description: "The Ansible collection that this role is part of."
   url: "https://gitlab.com/sr2c/ansible-terraform"
+- name: sr2c.terraform.terraform_s3_backend
+  description: "An ansible role to deploy the resources a Terraform backend to AWS using S3 and DynamoDB."
+  url: https://gitlab.com/sr2c/ansible-terraform/-/tree/dev/roles/terraform_s3_backend
 - name: terraform-null-ansible
   description: "A CloudPosse Terraform module to run Ansible playbooks."
   url: https://github.com/cloudposse/terraform-null-ansible
 
 references:
-  - name: sr2c.terraform.terraform_s3_backend
-    description: "An ansible role to deploy the resources a Terraform backend to AWS using S3 and DynamoDB."
-    url: https://gitlab.com/sr2c/ansible-terraform/-/tree/dev/roles/terraform_s3_backend
   - name: community.general.terraform
     description: Manages a Terraform deployment (and plans)
     url: https://docs.ansible.com/ansible/latest/collections/community/general/terraform_module.html

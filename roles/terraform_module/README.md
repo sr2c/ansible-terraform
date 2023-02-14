@@ -134,6 +134,7 @@ Like this project? Please give it a ★ on [our GitLab](https://gitlab.com/https
 Check out these related projects.
 
 - [sr2c.terraform](https://gitlab.com/sr2c/ansible-terraform) - The Ansible collection that this role is part of.
+- [sr2c.terraform.terraform_s3_backend](https://gitlab.com/sr2c/ansible-terraform/-/tree/dev/roles/terraform_s3_backend) - An ansible role to deploy the resources a Terraform backend to AWS using S3 and DynamoDB.
 - [terraform-null-ansible](https://github.com/cloudposse/terraform-null-ansible) - A CloudPosse Terraform module to run Ansible playbooks.
 
 
@@ -141,7 +142,6 @@ Check out these related projects.
 
 For additional context, refer to some of these links.
 
-- [sr2c.terraform.terraform_s3_backend](https://gitlab.com/sr2c/ansible-terraform/-/tree/dev/roles/terraform_s3_backend) - An ansible role to deploy the resources a Terraform backend to AWS using S3 and DynamoDB.
 - [community.general.terraform](https://docs.ansible.com/ansible/latest/collections/community/general/terraform_module.html) - Manages a Terraform deployment (and plans)
 
 
