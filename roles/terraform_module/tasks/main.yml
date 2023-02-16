@@ -35,15 +35,17 @@
     src: main.tf.json.j2
     dest: "{{ _terraform_module_workdir }}/main.tf.json"
   vars:
-    terraform_module_config:
+    terraform_module_version_argument: "{{ terraform_module_version is defined | ternary({'version': terraform_module_version}, {}) }}"
+    terraform_module_config_base:
       terraform:
         backend: "{{ terraform_module_backend_config }}"
       module:
-        this: "{{ terraform_module_inputs | combine({'source': terraform_module_source}) | combine(terraform_module_version is defined | ternary({'version': terraform_module_version}, {})) }}"
+        this: "{{ terraform_module_inputs | combine({'source': terraform_module_source}) | combine(terraform_module_version_argument) }}"
       output:
         this:
           value: "${module.this}"
           sensitive: true
+    terraform_module_config: "{{ terraform_module_config_base | combine(terraform_module_extra) }}"
 
 - name: Generate a Terraform plan
   community.general.terraform:

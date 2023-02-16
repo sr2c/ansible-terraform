@@ -11,3 +11,7 @@
         terraform_module_source: "cloudposse/label/null"
         terraform_module_inputs:
           name: test-label
+        terraform_module_extra:
+          resource:
+            null_resource:
+              extra: {}
