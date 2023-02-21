@@ -1,0 +1,12 @@
+name: terraform-ansible
+license: "BSD2"
+gitlab_repo: sr2c/terraform-ansible
+
+include:
+- "docs/ansible.md"
+- "docs/targets.md"
+
+contributors:
+  - name: irl
+    gitlab: irlxyz
+    gitlab_id: 5895869
