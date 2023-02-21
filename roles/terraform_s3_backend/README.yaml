@@ -15,6 +15,13 @@ description: |-
   No permissions or IAM roles are configured for accessing the state bucket other than via administrator access. If
   you are consolidating your Terraform state across projects into a single AWS account then you'd probably want to
   use per-project IAM roles for accessing and modifying state.
+introduction: |-
+  ### Requirements
+  
+  You will need to have installed:
+  
+  * [AWS CLI v2](https://aws.amazon.com/cli/)
+  * [boto3](https://aws.amazon.com/sdk-for-python/)
 usage: |-
   The following example shows how to ensure that the backend has been created, and then use the registered backend
   configuration with the terraform_module role. Note the use of the combine filter to add the key to the configuration
@@ -48,7 +55,7 @@ usage: |-
       bucket         = "{{ terraform_s3_backend_config['bucket'] }}"
       dynamodb_table = "{{ terraform_s3_backend_config['dynamodb_table'] }}"
       key            = "example"
-      region         = "{{ lookup('env', 'AWS_REGION') }}"
+      region         = "{{ terraform_s3_backend_config['region'] }}"
     }
   }
   ```

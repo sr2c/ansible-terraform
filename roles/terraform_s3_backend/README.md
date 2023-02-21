@@ -55,6 +55,15 @@ It's 100% Open Source and licensed under the [BSD 2-clause License](LICENSE).
 
 
 
+## Introduction
+
+### Requirements
+
+You will need to have installed:
+
+* [AWS CLI v2](https://aws.amazon.com/cli/)
+* [boto3](https://aws.amazon.com/sdk-for-python/)
+
 
 
 ## Usage
@@ -93,7 +102,7 @@ terraform {
     bucket         = "{{ terraform_s3_backend_config['bucket'] }}"
     dynamodb_table = "{{ terraform_s3_backend_config['dynamodb_table'] }}"
     key            = "example"
-    region         = "{{ lookup('env', 'AWS_REGION') }}"
+    region         = "{{ terraform_s3_backend_config['region'] }}"
   }
 }
 ```
