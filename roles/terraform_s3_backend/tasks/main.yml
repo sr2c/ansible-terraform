@@ -1,4 +1,9 @@
 ---
+- name: Lookup the current AWS region
+  ansible.builtin.shell:
+    cmd: aws configure get region
+  register: terraform_state_aws_region
+
 - name: Create S3 bucket for Terraform remote state
   amazon.aws.s3_bucket:
     name: "{{ terraform_state_s3_bucket_name }}"
@@ -20,4 +25,5 @@
     terraform_s3_backend_config:
       bucket: "{{ terraform_state_s3_bucket_name }}"
       dynamodb_table: "{{ terraform_state_dynamodb_table_name }}"
+      region: "{{ terraform_state_aws_region.stdout | trim }}"
   when: terraform_state_register_config
