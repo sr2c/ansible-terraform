@@ -109,6 +109,7 @@ tasks:
 | terraform_module_version | ~ | The version of the Terraform module to use when using a module from the Terraform registry. |
 | terraform_module_workdir | ~ | The location where the Terraform files will be templated. By default a temporary directory is created. The location should be an empty directory that already exists. |
 | terraform_module_workdir_clean_enabled | `true` | Whether to clean the Terraform module work directory after execution. |
+
 <!-- markdownlint-enable -->
 <!-- markdownlint-disable -->
 ## Makefile Targets

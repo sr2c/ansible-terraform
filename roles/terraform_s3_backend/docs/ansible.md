@@ -6,4 +6,5 @@
 | terraform_state_dynamodb_table_name | `{{ terraform_state_s3_bucket_name }}` | Name of the DynamoDB table to create to facilitate state locking. |
 | terraform_state_register_config | ``true`` | If true, the configuration will be registered in the `terraform_s3_backend_config` variable. |
 | terraform_state_s3_bucket_name | **REQUIRED** | Name of the S3 bucket to create to hold the Terraform state remotely. |
+
 <!-- markdownlint-enable -->
