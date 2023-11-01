@@ -86,6 +86,16 @@ EXAMPLES = r"""
 """
 
 
+def create_sops_file(sops_yml_path):
+  with open(sops_yml_path, "w") as f:
+    f.write("---\ncreation_rules: []")
+
+
+def read_sops_file(sops_yml_path):
+  with open(sops_yml_path, "r") as f:
+    yml_doc = yaml.safe_load(f)
+    return yml_doc
+
 def main():
     argument_spec = dict(
         path=dict(type="str", required=True),
@@ -127,8 +137,7 @@ def main():
     if not sops_yml_file.exists():
       if state == "present":
         try:
-          with open(sops_yml_path, "w") as f:
-            f.write("---\ncreation_rules: []")
+            create_sops_file()
             changed = True
         except:
           module.fail_json(
@@ -147,9 +156,12 @@ def main():
       return
 
     try:
-      with open(sops_yml_path, "r") as f:
-        yml_doc = yaml.safe_load(f)
-        #yml_doc = yaml.yaml_load(f)
+      yml_doc = read_sops_file(sops_yml_path)
+      if yml_doc is None:
+        # This happens when the file exists but is empty
+        create_sops_file(sops_yml_path)
+        yml_doc = read_sops_file(sops_yml_path)
+        changed = True
     except:
       module.fail_json(
         msg="Error loading sops configuration file '%s'" % (sops_yml_path),
@@ -159,15 +171,18 @@ def main():
 
     expected_rule = {"id": rule_id, "path_regex": path_regex}
     key_groups = []
+    # only 1 key group supported for now
+    key_group = {}
     if module.params["age"]:
-      key_groups.append({"age": sorted(module.params["age"])})
+      key_group["age"] = sorted(module.params["age"])
 
     if module.params["pgp"]:
-      key_groups.append({"pgp": sorted(module.params["pgp"])})
+      key_group["pgp"] = sorted(module.params["pgp"])
 
     if module.params["kms"]:
-      key_groups.append({"kms": sorted(module.params["kms"], key=lambda d: d["arn"])})
+      key_group["kms"] = sorted(module.params["kms"], key=lambda d: d["arn"])
 
+    key_groups.append(key_group)
     expected_rule["key_groups"] = key_groups
 
 
