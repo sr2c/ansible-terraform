@@ -6,3 +6,5 @@ terraform_state_dynamodb_table_name: "{{ terraform_state_s3_bucket_name }}"
 terraform_state_register_config: true
 # @var terraform_sops_kms_key_name: # (required) The name of the key to create for encrypting files with mozilla/sops
 # terraform_sops_kms_key_name:
+# @var terraform_state_aws_region: # (optional) The region in which the state bucket/table will be created, pulled from the profile if not defined.
+# terraform_state_aws_region:

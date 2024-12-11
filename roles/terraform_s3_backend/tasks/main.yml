@@ -2,7 +2,13 @@
 - name: Lookup the current AWS region
   ansible.builtin.shell:
     cmd: aws configure get region
-  register: terraform_state_aws_region
+  register: terraform_state_aws_region_out
+  when: terraform_state_aws_region is not defined
+
+- name: Set the current AWS region
+  ansible.builtin.set_fact:
+    terraform_state_aws_region: "{{ terraform_state_aws_region.stdout | trim  }}"
+  when: terraform_state_aws_region is not defined
 
 - name: Create S3 bucket for Terraform remote state
   amazon.aws.s3_bucket:
@@ -25,7 +31,7 @@
     terraform_s3_backend_config:
       bucket: "{{ terraform_state_s3_bucket_name }}"
       dynamodb_table: "{{ terraform_state_dynamodb_table_name }}"
-      region: "{{ terraform_state_aws_region.stdout | trim }}"
+      region: "{{ terraform_state_aws_region }}"
   when: terraform_state_register_config
 
 - name: Create KMS key for encryption of secrets with sops
