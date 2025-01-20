@@ -45,7 +45,9 @@
     tags:
       Purpose: Encrytion of secrets with mozilla/sops
   register: _terraform_sops_kms_key
+  when: terraform_sops_kms_key_create_enabled
 
 - name: Set sops kms key arn
   ansible.builtin.set_fact:
     terraform_sops_kms_key_arn: "{{ _terraform_sops_kms_key.key_arn }}"
+  when: terraform_sops_kms_key_create_enabled
