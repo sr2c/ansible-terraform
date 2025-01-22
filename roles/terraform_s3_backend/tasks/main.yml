@@ -1,4 +1,19 @@
 ---
+- name: Assert required terraform_state_s3_bucket_name
+  ansible.builtin.assert:
+    that:
+      - terraform_state_s3_bucket_name is defined
+      - terraform_state_s3_bucket_name | length > 0
+    fail_msg: "You must provde the variable terraform_state_s3_bucket_name"
+
+- name: Assert input var invariants
+  ansible.builtin.assert:
+    that:
+      - terraform_sops_kms_key_name is defined
+      - terraform_sops_kms_key_name | length > 0
+    fail_msg: "When terraform_sops_kms_key_create_enabled is true, you must provde the variable terraform_sops_kms_key_name"
+  when: terraform_sops_kms_key_create_enabled
+
 - name: Lookup the current AWS region
   ansible.builtin.shell:
     cmd: aws configure get region
