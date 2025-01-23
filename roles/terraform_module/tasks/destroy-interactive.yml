@@ -1,0 +1,44 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/tasks.json
+
+- name: Wait for confirmation
+  ansible.builtin.pause:
+    prompt: |
+      Do you want to perform these actions?
+        Terraform will perform the actions described above.
+        Only 'yes' will be accepted to approve.
+
+        Enter a value:
+  register: terraform_module_confirmation
+
+- name: Pause before cleaning up
+  ansible.builtin.pause:
+    prompt: |
+      Plan was not approved. The temporary directory at:
+
+        {{ terraform_module_temporary_directory['path'] }}
+
+      will be cleaned up in 5 seconds. If you wish to investigate the Terraform configuration, press Ctrl+C and abort
+      this playbook now!
+    seconds: 5
+  when: terraform_module_confirmation.user_input != "yes" and terraform_module_workdir is not defined and terraform_module_workdir_clean_enabled
+
+- name: Apply the Terraform plan
+  community.general.terraform:
+    binary_path: "{{ terraform_module_binary_path }}"
+    project_path: "{{ _terraform_module_workdir }}"
+    state: absent
+    plan_file: "{{ _terraform_module_plan_file }}"
+  when: terraform_module_confirmation.user_input == "yes"
+
+- name: Will stop play, cleanup
+  ansible.builtin.include_tasks: cleanup.yml
+  when:
+    - terraform_module_confirmation.user_input != "yes"
+    - terraform_module_end_play_on_approval_rejection
+
+- name: End the play when the operator chose not to continue
+  ansible.builtin.meta: end_host
+  when:
+    - terraform_module_confirmation.user_input != "yes"
+    - terraform_module_end_play_on_approval_rejection

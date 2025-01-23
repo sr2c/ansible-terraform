@@ -1,0 +1,26 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/tasks.json
+- name: Obtain the outputs from Terraform
+  ansible.builtin.command:
+    cmd: "terraform output -json"
+    chdir: "{{ _terraform_module_workdir }}"
+  register: terraform_module_outputs_default
+  changed_when: false
+
+- name: Parse terraform json output
+  ansible.builtin.set_fact:
+    terraform_module_outputs_dict: "{{ terraform_module_outputs_default.stdout | from_json }}"
+
+- name: Check if terraform json output is empty
+  ansible.builtin.set_fact:
+    terraform_module_has_outputs: "{{ 'this' in terraform_module_outputs_dict }}"
+
+- name: Save the outputs to the chosen variable
+  ansible.builtin.set_fact:
+    "{{ terraform_module_outputs_var }}": "{{ terraform_module_outputs_dict.this.value | default({}) }}"
+  when: terraform_module_has_outputs
+
+- name: Set empty dict when no outputs exist
+  ansible.builtin.set_fact:
+    "{{ terraform_module_outputs_var }}": {}
+  when: not terraform_module_has_outputs

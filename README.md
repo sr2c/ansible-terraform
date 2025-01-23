@@ -1,6 +1,9 @@
 
 <!-- markdownlint-disable -->
 # terraform-ansible
+[![pipeline status](https://gitlab.com/sr2c/terraform-ansible/badges/main/pipeline.svg?ignore_skipped=true)](https://gitlab.com/sr2c/terraform-ansible/-/pipelines)
+[![latest release](https://gitlab.com/sr2c/terraform-ansible/-/badges/release.svg)](https://gitlab.com/sr2c/terraform-ansible/-/tags)
+[![gitlab stars](https://img.shields.io/gitlab/stars/sr2c/terraform-ansible)](https://gitlab.com/sr2c/terraform-ansible/-/starrers)
 <!-- markdownlint-restore -->
 
 [![README Header][readme_header_img]][readme_header_link]
@@ -114,7 +117,7 @@ In general, PRs are welcome. We follow the typical "fork-and-pull" Git workflow.
 
 ## Copyright
 
-Copyright © 2021-2023 SR2 Communications Limited
+Copyright © 2021-2025 SR2 Communications Limited
 
 
 
@@ -176,30 +179,29 @@ Trans is an umbrella term to describe people whose gender is not the same as, or
 sex they were assigned at birth. *Like all people*, they have the right to be treated with dignity and respect and to
 have their human rights protected.
 
-Transgender people face significant discrimination and prejudice in many areas of their lives, including employment,
+Trans people face significant discrimination and prejudice in many areas of their lives, including employment,
 education, housing, and healthcare. They are also at increased risk of violence and hate crimes. These issues
-can have a serious impact on the physical and mental well-being of transgender people and can prevent them from fully
+can have a serious impact on the physical and mental well-being of trans people and can prevent them from fully
 participating in society.
 
-Transgender rights are therefore an important part of the broader struggle for human rights. Everyone, regardless of
+Trans rights are therefore an important part of the broader struggle for human rights. Everyone, regardless of
 their gender identity, should be able to live their lives free from discrimination and to enjoy the same rights and
 opportunities as everyone else. This includes the right to express their gender identity and to be treated with respect
 and dignity.
 
-It is important for society to recognize and respect the rights of transgender people, and to take steps to address the
-discrimination and prejudice that they face. This can include supporting policies and laws that protect transgender
-people from discrimination and promoting acceptance and understanding of transgender people within the broader
+It is important for society to recognize and respect the rights of trans people, and to take steps to address the
+discrimination and prejudice that they face. This can include supporting policies and laws that protect trans
+people from discrimination and promoting acceptance and understanding of trans people within the broader
 community.
+
+* [Four Pillars'](https://www.fourpillarsuk.org/) mission is to support the LGBT+ community in manners of Mental,
+  Emotional, Physical & Sexual Health and offer information & support on a person-to-person basis to build a community
+  that supports itself through peer education; thereby allowing individuals to make informed choices to improve their
+  overall health & wellbeing.
 
 * [Gendered Intelligence](https://genderedintelligence.co.uk/) is a trans-led and trans-involving grassroots organisation
   with a wealth of lived experience, community connections of many kinds, and a depth and breadth of trans community
   knowledge. They offer staff training, consultancy, youth work, mentoring and undertake public engagement activities.
-
-* [TransAid Cymru](https://transaid.cymru/) began life as a local mutual aid group in Cardiff. Tired of the ways that the
-  electoral political system had let the trans community down, they decided it was time to do something for themselves.
-  Many of the founding members were disabled and unemployed. Familiar with the real, material needs of the trans
-  community and how little support there was out there, they founded the mutual aid group in order to provide the services
-  the trans community needed.
 
 If you have the means and you have benefited from this open source project, please consider making a donation to either
 (or both) of the above groups.
@@ -218,14 +220,14 @@ If you have the means and you have benefited from this open source project, plea
 <!-- markdownlint-disable -->
   [logo]: https://www.sr2.uk/readme/logo.png
   [website]: https://www.sr2.uk/?utm_source=gitlab&utm_medium=readme&utm_campaign=sr2c/terraform-ansible&utm_content=website
-  [gitlab]: https://www.gitlab.com/sr2c
-  [contact]: https://www.sr2.uk/
-  [matrix]: https://matrix.to/#/%23dev:sr2.uk
+  [gitlab]: https://go.sr2.uk/gitlab?utm_source=gitlab&utm_medium=readme&utm_campaign=sr2c/terraform-ansible&utm_content=gitlab
+  [contact]: https://go.sr2.uk/contact?utm_source=gitlab&utm_medium=readme&utm_campaign=sr2c/terraform-ansible&utm_content=contact
+  [matrix]: https://go.sr2.uk/matrix?utm_source=gitlab&utm_medium=readme&utm_campaign=sr2c/terraform-ansible&utm_content=matrix
   [linkedin]: https://www.linkedin.com/company/sr2uk/
   [email]: mailto:contact@sr2.uk
   [readme_header_img]: https://www.sr2.uk/readme/paid-support.png
   [readme_header_link]: https://www.sr2.uk/?utm_source=gitlab&utm_medium=readme&utm_campaign=sr2c/terraform-ansible&utm_content=readme_header_link
   [readme_commercial_support_img]: https://www.sr2.uk/readme/paid-support.png
-  [readme_commercial_support_link]: https://www.sr2.uk/?utm_source=gitlab&utm_medium=readme&utm_campaign=sr2c/terraform-ansible&utm_content=readme_commercial_support_link
+  [readme_commercial_support_link]: https://go.sr2.uk/commerical-support?utm_source=gitlab&utm_medium=readme&utm_campaign=sr2c/terraform-ansible&utm_content=readme_commercial_support_link
   [trans_rights]: https://img.shields.io/badge/Trans%20Rights-Human%20Rights-lightblue?logo=data:img/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAADVJREFUeNpijD73i4EUwMRAIiBZA+PXlTsGm5P+//8/yJzE8m3VzkHmJNL9kKbqNMicBBBgAM3lCr5JiK9jAAAAAElFTkSuQmCC
 <!-- markdownlint-restore -->

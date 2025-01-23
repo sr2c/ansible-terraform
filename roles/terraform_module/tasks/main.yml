@@ -1,4 +1,5 @@
 ---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/tasks.json
 - name: Ensure a module path is defined
   ansible.builtin.assert:
     that:
@@ -14,11 +15,20 @@
     terraform_module_backend_config_default:
       local: {}
 
+- name: Ensure terraform_module_action is valid
+  ansible.builtin.assert:
+    that:
+      - terraform_module_action is defined
+      - terraform_module_action in ['plan-apply', 'plan-destroy', 'apply', 'destroy']
+    fail_msg: "terraform_module_action must be one of: plan-apply, plan-destroy, apply, destroy. Got: {{ terraform_module_action }}"
+    success_msg: "terraform_module_action is valid: {{ terraform_module_action }}"
+
 - name: Create a temporary directory
   ansible.builtin.tempfile:
     state: directory
   register: terraform_module_temporary_directory
   when: terraform_module_workdir is not defined
+  check_mode: false
 
 - name: Set working directory from temporary directory
   ansible.builtin.set_fact:
@@ -29,6 +39,18 @@
   ansible.builtin.set_fact:
     _terraform_module_workdir: "{{ terraform_module_workdir }}"
   when: terraform_module_workdir is defined
+
+- name: Determine if we should generate a plan or not (no)
+  ansible.builtin.set_fact:
+    _terraform_module_should_plan: false
+    _terraform_module_plan_file: "{{ terraform_module_plan_file_input }}"
+  when: terraform_module_plan_file_input is defined
+
+- name: Determine if we should generate a plan or not (yes)
+  ansible.builtin.set_fact:
+    _terraform_module_should_plan: true
+    _terraform_module_plan_file: "{{ inventory_hostname }}-plan.out"
+  when: terraform_module_plan_file_input is not defined
 
 - name: Write root module configuration
   ansible.builtin.template:
@@ -47,76 +69,57 @@
           sensitive: true
     terraform_module_config: "{{ terraform_module_config_base | combine(terraform_module_extra) }}"
 
-- name: Generate a Terraform plan
-  community.general.terraform:
-    project_path: "{{ _terraform_module_workdir }}"
-    force_init: true
-    state: planned
-    plan_file: "{{ inventory_hostname }}-plan.out"
+- name: Terraform init
+  ansible.builtin.include_tasks: init.yml
+  when: _terraform_module_should_plan or terraform_module_force_init
 
-- name: Register the Terraform plan
-  ansible.builtin.command:
-    cmd: "terraform show -no-color {{ inventory_hostname }}-plan.out"
-    chdir: "{{ _terraform_module_workdir }}"
-  register: terraform_module_plan
+- name: Generate terraform plan
+  ansible.builtin.include_tasks: plan.yml
+  when: _terraform_module_should_plan
 
-- name: Detect if there are any changes
-  ansible.builtin.set_fact:
-    terraform_module_plan_has_changes: '{{ terraform_module_plan.stdout is not ansible.builtin.match(multiline=true, pattern="(?s:.)*Terraform has compared your real infrastructure against your configuration(?s:.)+and found no differences, so no changes are needed.*") }}'
+- name: Parse terraform plan
+  ansible.builtin.include_tasks: parse-plan.yml
 
-- name: Confirm and apply the plan
-  block:
-    - name: Display the Terraform plan
-      ansible.builtin.debug:
-        var: terraform_module_plan.stdout
-
-    - name: Wait for confirmation
-      ansible.builtin.pause:
-        prompt: |
-          Do you want to perform these actions?
-            Terraform will perform the actions described above.
-            Only 'yes' will be accepted to approve.
-
-            Enter a value:
-      register: terraform_module_confirmation
-
-    - name: Pause before cleaning up
-      ansible.builtin.pause:
-        prompt: |
-          Plan was not approved. The temporary directory at:
-
-            {{ terraform_module_temporary_directory['path'] }}
-
-          will be cleaned up in 5 seconds. If you wish to investigate the Terraform configuration, press Ctrl+C and abort
-          this playbook now!
-        seconds: 5
-      when: terraform_module_confirmation.user_input != "yes" and terraform_module_workdir is not defined and terraform_module_workdir_clean_enabled
-
-    - name: Apply the Terraform plan
-      community.general.terraform:
-        project_path: "{{ _terraform_module_workdir }}"
-        state: present
-        plan_file: "{{ inventory_hostname }}-plan.out"
-      when: terraform_module_confirmation.user_input == "yes"
-  when: terraform_module_plan_has_changes  # end of block
-
-- name: Obtain the outputs from Terraform
-  ansible.builtin.command:
-    cmd: "terraform output -json"
-    chdir: "{{ _terraform_module_workdir }}"
-  register: terraform_module_outputs_default
-
-- name: Save the outputs to the chosen variable
-  ansible.builtin.set_fact:
-    "{{ terraform_module_outputs_var }}": "{{ (terraform_module_outputs_default.stdout | from_json).this.value }}"
-
-- name: Clean up temporary directory
-  ansible.builtin.file:
-    path: "{{ _terraform_module_workdir }}"
-    state: absent
-  when: terraform_module_workdir is not defined and terraform_module_workdir_clean_enabled
-
-- name: Print temporary directory for investigation
+- name: Display the Terraform plan
   ansible.builtin.debug:
-    msg: "Temporary directory has been retained at: {{ terraform_module_temporary_directory['path'] }}"
-  when: terraform_module_workdir is not defined and not terraform_module_workdir_clean_enabled
+    var: terraform_module_plan
+  when: terraform_module_preview_plan | ansible.builtin.bool
+
+- name: Apply interactively
+  ansible.builtin.include_tasks: apply-interactive.yml
+  when:
+    - not ansible_check_mode
+    - terraform_module_interactive | ansible.builtin.bool
+    - terraform_module_action == 'apply'
+    - terraform_module_plan_has_changes
+
+- name: Apply non-interactively
+  ansible.builtin.include_tasks: apply-non-interactive.yml
+  when:
+    - not ansible_check_mode
+    - not (terraform_module_interactive | ansible.builtin.bool)
+    - terraform_module_action == 'apply'
+    - terraform_module_plan_has_changes
+
+- name: Destroy interactively
+  ansible.builtin.include_tasks: destroy-interactive.yml
+  when:
+    - not ansible_check_mode
+    - terraform_module_interactive | ansible.builtin.bool
+    - terraform_module_action == 'destroy'
+    - terraform_module_plan_has_changes
+
+- name: Destroy non-interactively
+  ansible.builtin.include_tasks: destroy-non-interactive.yml
+  when:
+    - not ansible_check_mode
+    - not (terraform_module_interactive | ansible.builtin.bool)
+    - terraform_module_action == 'destroy'
+    - terraform_module_plan_has_changes
+
+- name: Obtain outputs
+  ansible.builtin.include_tasks: outputs.yml
+  when: []
+
+- name: Cleanup
+  ansible.builtin.include_tasks: cleanup.yml

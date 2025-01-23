@@ -1,0 +1,8 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/tasks.json
+- name: Applying the Terraform plan
+  community.general.terraform:
+    binary_path: "{{ terraform_module_binary_path }}"
+    project_path: "{{ _terraform_module_workdir }}"
+    state: present
+    plan_file: "{{ _terraform_module_plan_file }}"

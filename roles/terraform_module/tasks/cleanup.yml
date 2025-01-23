@@ -1,0 +1,24 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/tasks.json
+
+- name: Clean up temporary directory
+  ansible.builtin.file:
+    path: "{{ _terraform_module_workdir }}"
+    state: absent
+  when:
+    - terraform_module_workdir is not defined
+    - terraform_module_workdir_clean_enabled
+  check_mode: false
+
+- name: Print temporary directory for investigation
+  ansible.builtin.debug:
+    msg: "Temporary directory has been retained at: {{ terraform_module_temporary_directory['path'] }}"
+  when:
+    - terraform_module_workdir is not defined
+    - not terraform_module_workdir_clean_enabled
+
+- name: Print work dir for investigation
+  ansible.builtin.debug:
+    msg: "Working terraform directory has been retained at: {{ terraform_module_workdir }}"
+  when:
+    - terraform_module_workdir is defined

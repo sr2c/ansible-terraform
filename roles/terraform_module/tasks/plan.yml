@@ -1,0 +1,68 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/tasks.json
+
+- name: Set -destroy flag
+  ansible.builtin.set_fact:
+    _terraform_module_plan_argv_action: ["-destroy"]
+  when:
+    - terraform_module_action in ['destroy', 'plan-destroy']
+
+- name: Build tf plan args
+  ansible.builtin.set_fact:
+    _terraform_module_plan_argv: "{{ terraform_module_plan_argv_base + terraform_module_plan_argv_extra + _terraform_module_plan_argv_action }}"
+
+## NOTE: if you change this change the corresponding one below
+- name: Generate terraform plan
+  ansible.builtin.command:
+    argv: "{{ _terraform_module_plan_argv }}"
+  args:
+    chdir: "{{ _terraform_module_workdir }}"
+  register: _terraform_module_plan_result
+  failed_when: false
+  changed_when: _terraform_module_plan_result == 2
+  check_mode: false
+
+- name: Extract lock information from terraform error
+  ansible.builtin.set_fact:
+    terraform_module_plan_lock_id: "{{ _terraform_module_plan_result.stderr | regex_search(' ID:\\s+([\\w-]+)', '\\1') | first }}"
+    terraform_module_plan_lock_operation: "{{ _terraform_module_plan_result.stderr | regex_search('Operation:\\s+(\\w+)', '\\1') | first }}"
+    terraform_module_plan_lock_who: "{{ _terraform_module_plan_result.stderr | regex_search('Who:\\s+([^\\n]+)', '\\1') | first }}"
+  when:
+    - _terraform_module_plan_result.rc not in [0, 2]
+    - "'Error acquiring the state lock' in _terraform_module_plan_result.stderr"
+
+- name: End the play when terraform failed
+  ansible.builtin.fail:
+    msg: "{{ _terraform_module_plan_result.stderr }}"
+  when:
+    - _terraform_module_plan_result.rc not in [0, 2]
+    - "'Error acquiring the state lock' not in _terraform_module_plan_result.stderr"
+
+- name: End the play when state lock failed
+  ansible.builtin.fail:
+    msg: "{{ _terraform_module_plan_result.stderr }}"
+  when:
+    - _terraform_module_plan_result.rc not in [0, 2]
+    - not terraform_module_force_unlock
+
+- name: Attempt force unlock
+  ansible.builtin.command: terraform force-unlock -force {{ terraform_module_plan_lock_id }}
+  args:
+    chdir: "{{ _terraform_module_workdir }}"
+  when:
+    - not ansible_check_mode
+    - _terraform_module_plan_result.rc not in [0, 2]
+    - terraform_module_force_unlock
+
+- name: Retry - Generate terraform plan
+  ansible.builtin.command:
+    argv: "{{ _terraform_module_plan_argv }}"
+  args:
+    chdir: "{{ _terraform_module_workdir }}"
+  register: _terraform_module_plan_result
+  failed_when: _terraform_module_plan_result.rc not in [0, 2]
+  changed_when: _terraform_module_plan_result == 2
+  when:
+    - not ansible_check_mode
+    - _terraform_module_plan_result.rc not in [0, 2]
+    - terraform_module_force_unlock

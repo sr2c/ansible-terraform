@@ -1,6 +1,6 @@
 ---
 # @var terraform_module_backend_config: {"local" : {}} # The backend configuration to use.
-terraform_module_backend_config: {"local" : {}}
+terraform_module_backend_config: { "local": {} }
 # @var terraform_module_inputs: {} # The inputs to pass to the Terraform module.
 terraform_module_inputs: {}
 # @var terraform_module_outputs_var: "terraform_module_outputs" # The name of a host variable to store the outputs of the Terraform module.
@@ -12,3 +12,35 @@ terraform_module_extra: {}
 # @var terraform_module_workdir: # The location where the Terraform files will be templated. By default a temporary directory is created. The location should be an empty directory that already exists.
 # @var terraform_module_workdir_clean_enabled: true # Whether to clean the Terraform module work directory after execution.
 terraform_module_workdir_clean_enabled: true
+
+# @var terraform_module_plan_file_input:  # An optional path to an existing plan file. If supplied, will skip the planning phase and use the provided plan.
+
+# @var terraform_module_action: present # The action to take, one of: plan-apply, plan-destroy, apply, destroy
+terraform_module_action: apply
+
+# @var terraform_module_interactive: true # Whether or not to prompt for user input for approval
+terraform_module_interactive: true
+
+# @var terraform_module_binary_path: terraform # The path of a terraform binary to use
+terraform_module_binary_path: "{{ lookup('pipe', 'which terraform') }}"
+
+# @var terraform_module_parallelism: 10 # Limit the number of concurrent operations, defaults to 10
+terraform_module_parallelism: 10
+
+# @var terraform_module_init_argv_extra: [] # A list of extra command line args to pass to `terraform init`
+terraform_module_init_argv_extra: []
+
+# @var terraform_module_plan_argv_extra: [] # A list of extra command line args to pass to `terraform plan`
+terraform_module_plan_argv_extra: []
+
+# @var terraform_module_force_init: false # When true, always runs a `terraform init`
+terraform_module_force_init: false
+
+# @var terraform_module_end_play_on_approval_rejection: true # Whether to end the play when the operator does not approve the apply/destroy in interactive mode
+terraform_module_end_play_on_approval_rejection: true
+
+# @var terraform_module_force_unlock: false # When true the module will attempt to force unlock the terraform state backend when it detects a lock
+terraform_module_force_unlock: false
+
+# @var terraform_module_preview_plan: true # When true, the plan preview will be displayed
+terraform_module_preview_plan: true

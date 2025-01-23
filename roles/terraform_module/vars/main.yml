@@ -1,0 +1,19 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/vars.json
+terraform_module_init_argv_base:
+  - "{{ terraform_module_binary_path  }}"
+  - "init"
+  - "-no-color"
+  - "-input=false"
+
+terraform_module_plan_argv_base:
+  - "{{ terraform_module_binary_path  }}"
+  - "plan"
+  - "-no-color"
+  - "-out={{ _terraform_module_plan_file }}"
+  - "-detailed-exitcode"
+  - "-input=false"
+  - "-parallelism={{ terraform_module_parallelism }}"
+
+# this is empty by default, but will be used when a destroy plan is executing
+_terraform_module_plan_argv_action: []

@@ -1,0 +1,14 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/tasks.json
+- name: Build tf init args
+  ansible.builtin.set_fact:
+    _terraform_module_init_argv: "{{ terraform_module_init_argv_base + terraform_module_init_argv_extra }}"
+
+- name: Terraform init
+  ansible.builtin.command:
+    argv: "{{ _terraform_module_init_argv }}"
+  args:
+    chdir: "{{ _terraform_module_workdir }}"
+  register: _terraform_module_plan_result
+  failed_when: _terraform_module_plan_result.rc not in [0, 2]
+  changed_when: _terraform_module_plan_result == 2

@@ -1,0 +1,65 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/tasks.json
+
+- name: Register the Terraform plan contents, json
+  ansible.builtin.command:
+    cmd: "terraform show -json -no-color {{ _terraform_module_plan_file }}"
+    chdir: "{{ _terraform_module_workdir }}"
+  register: _terraform_module_plan_show
+  changed_when: false
+  check_mode: false
+
+- name: Register the Terraform plan contents, human readable
+  ansible.builtin.command:
+    cmd: "terraform show -no-color {{ _terraform_module_plan_file }}"
+    chdir: "{{ _terraform_module_workdir }}"
+  register: _terraform_module_plan_show_human
+  changed_when: false
+  check_mode: false
+
+- name: Parse Terraform plan json
+  ansible.builtin.set_fact:
+    _terraform_module_plan_json: "{{ _terraform_module_plan_show.stdout | from_json }}"
+
+- name: Parse Terraform plan and set facts
+  # ref: https://developer.hashicorp.com/terraform/internals/json-format
+  ansible.builtin.set_fact:
+    terraform_module_plan_applyable: "{{ _terraform_module_plan_json | json_query('applyable') }}"
+    terraform_module_plan_complete: "{{ _terraform_module_plan_json | json_query('complete') }}"
+    terraform_module_plan_errored: "{{ _terraform_module_plan_json | json_query('errored') }}"
+    terraform_module_plan_has_resource_changes: >-
+      {{
+        (_terraform_module_plan_json.resource_changes | default([])
+        | selectattr('change.actions', 'defined')
+        | rejectattr('change.actions', 'equalto', ['no-op'])
+        | list)
+        | length > 0
+      }}
+    terraform_module_plan_has_resource_drift: "{{ _terraform_module_plan_json.resource_drift | default([]) | length > 0 }}"
+    terraform_module_plan_has_output_changes: >-
+      {{
+        (_terraform_module_plan_json.output_changes | default({})
+        | dict2items
+        | selectattr('value.actions', 'defined')
+        | rejectattr('value.actions', 'equalto', ['no-op'])
+        | list)
+        | length > 0
+      }}
+
+- name: Set the terraform plan contents
+  ansible.builtin.set_fact:
+    terraform_module_plan: "{{ _terraform_module_plan_show_human.stdout }}"
+
+- name: Set the plan file variable the input plan
+  ansible.builtin.set_fact:
+    terraform_module_plan_file: "{{ terraform_module_plan_file_input }}"
+  when: terraform_module_plan_file_input is defined
+
+- name: Set the plan file variable for generated plan
+  ansible.builtin.set_fact:
+    terraform_module_plan_file: "{{ ([ _terraform_module_workdir, _terraform_module_plan_file ] | ansible.builtin.path_join) }}"
+  when: terraform_module_plan_file_input is not defined
+
+- name: Detect if there are any changes
+  ansible.builtin.set_fact:
+    terraform_module_plan_has_changes: "{{ terraform_module_plan_applyable }}"
