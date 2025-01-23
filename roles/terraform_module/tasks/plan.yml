@@ -43,7 +43,7 @@
     msg: "{{ _terraform_module_plan_result.stderr }}"
   when:
     - _terraform_module_plan_result.rc not in [0, 2]
-    - not terraform_module_force_unlock
+    - not (terraform_module_force_unlock | ansible.builtin.bool)
 
 - name: Attempt force unlock
   ansible.builtin.command: terraform force-unlock -force {{ terraform_module_plan_lock_id }}
@@ -52,7 +52,7 @@
   when:
     - not ansible_check_mode
     - _terraform_module_plan_result.rc not in [0, 2]
-    - terraform_module_force_unlock
+    - (terraform_module_force_unlock | ansible.builtin.bool)
 
 - name: Retry - Generate terraform plan
   ansible.builtin.command:
@@ -65,4 +65,4 @@
   when:
     - not ansible_check_mode
     - _terraform_module_plan_result.rc not in [0, 2]
-    - terraform_module_force_unlock
+    - (terraform_module_force_unlock | ansible.builtin.bool)
