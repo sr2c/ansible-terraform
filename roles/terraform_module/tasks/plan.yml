@@ -31,9 +31,11 @@
     - _terraform_module_plan_result.rc not in [0, 2]
     - "'Error acquiring the state lock' in _terraform_module_plan_result.stderr"
 
-- name: End the play when terraform failed
+- name: End the play when terraform planning failed
   ansible.builtin.fail:
-    msg: "{{ _terraform_module_plan_result.stderr }}"
+    msg: |
+      terraform plan failed (in workdir= "{{ _terraform_module_workdir }}") with stderr:
+      {{ _terraform_module_plan_result.stderr }}
   when:
     - _terraform_module_plan_result.rc not in [0, 2]
     - "'Error acquiring the state lock' not in _terraform_module_plan_result.stderr"

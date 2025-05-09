@@ -61,6 +61,7 @@
     terraform_module_config_base:
       terraform:
         backend: "{{ terraform_module_backend_config }}"
+        required_providers: "{{ terraform_module_required_providers_config }}"
       module:
         this: "{{ terraform_module_inputs | combine({'source': terraform_module_source}) | combine(terraform_module_version_argument) }}"
       output:
